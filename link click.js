@@ -5,9 +5,6 @@
         if (!link) {
             return;
         }
-        
-        // Prevent multiple event triggering
-        event.stopPropagation();
 
         var clickText = link.innerText.trim();
 
@@ -44,7 +41,14 @@
 
         if (linkElements.length > 0) {
             linkElements.forEach(element => {
-                element.addEventListener('click', handleLinkClick);
+                if (element.tagName === 'A') {
+                    element.addEventListener('click', handleLinkClick);
+                } else {
+                    var links = element.querySelectorAll('a');
+                    links.forEach(link => {
+                        link.addEventListener('click', handleLinkClick);
+                    });
+                }
             });
         } else {
             console.log("Failed: Link elements and/or containers with .link_click class not found");
