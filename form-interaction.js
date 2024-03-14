@@ -1,59 +1,71 @@
-document.addEventListener('DOMContentLoaded', function() {
-    window.dataLayer = window.dataLayer || [];
 
-    function trackFormSubmission(form, formType, formName) {
-        setTimeout(function() {
-            var interactionResponse = checkFormSubmissionResult();
-            var clickText = form.querySelector('button[type="submit"]').innerText.trim();
-            var dataLayerObject = {
-                event: 'form_interaction',
-                click_text: clickText,
-                form_type: formType,
-                form_name: formName,
-                interaction_type: 'form_submission',
-                interaction_response: interactionResponse
-            };
+		document.addEventListener('DOMContentLoaded', function() {
+			var formElements = document.querySelectorAll('[data-attribute="form_interaction"]');
 
-            if (formType !== 'newsletter') {
-                var storeLocationDropdown = form.querySelector('select[data-placeholder="Choose a location"]');
-                dataLayerObject.store_location = storeLocationDropdown ? storeLocationDropdown.value : 'Unknown Location';
-            }
+			if (formElements.length > 0) {
+				console.log("Successful: Form elements with data-attribute found");
 
-            window.dataLayer.push(dataLayerObject);
-            console.log("Successful: Data layer updated for form interaction");
-        }, 2000);
-    }
+				// Event Delegation for Form Submissions
+				document.addEventListener('submit', function(event) {
+					const form = event.target.closest('form');
 
-    function checkFormSubmissionResult() {
-        var successMessage = document.querySelector('.frm_message');
-        var errorMessage = document.querySelector('.frm_error_style');
-        if (successMessage) {
-            return 'successful';
-        } else if (errorMessage) {
-            return 'failed';
-        } else {
-            return 'unknown';
-        }
-    }
+					if (form && form.closest('[data-attribute="form_interaction"]')) { // Check if within our target
+						event.preventDefault();
 
-    document.body.addEventListener('submit', function(event) {
-        var form = event.target.closest('form');
-        if (!form) return;
+						var buttonText = form.querySelector('button[type="submit"]').textContent.trim();
+						var formName = form.getAttribute('name');
+						var interactionResponse;
 
-        var formWrapper = form.closest('div[data-attribute="form_click"]');
-        if (!formWrapper) return;
+						var formWrapper = form.closest('[data-form-type]');
+						var formType = formWrapper ? formWrapper.getAttribute('data-form-type') : null;
 
-        console.log("Attributes/classes found for form submission");
+						setTimeout(function() {
+							var isSuccess = form.querySelector('.elementor-message-success');
+							var isError = form.querySelector('.elementor-message-danger'); // Check for error
 
-        if (formWrapper.classList.contains('contact_click')) {
-            console.log("Processing 'Contact Us' form");
-            trackFormSubmission(form, 'contact form', 'Contact Us');
-        } else if (formWrapper.classList.contains('newsletter_click')) {
-            console.log("Processing 'Weekly Newsletter' form");
-            trackFormSubmission(form, 'newsletter', 'Weekly Newsletter');
-        } else if (formWrapper.classList.contains('quote-form_click')) {
-            console.log("Processing 'Get a Quote' form");
-            trackFormSubmission(form, 'quote request', 'Get a Quote');
-        }
-    }, true);
-});
+							if (isSuccess) {
+								interactionResponse = 'successful';
+							} else if (isError) {
+								interactionResponse = 'failed'; // Update for error scenario
+							} else {
+								console.log("Waiting for success/error message...");
+								setTimeout(function() {
+									isSuccess = form.querySelector('.elementor-message-success');
+									isError = form.querySelector('.elementor-message-danger');
+
+									if (isSuccess) {
+										interactionResponse = 'successful';
+									} else if (isError) { 
+										interactionResponse = 'failed';
+									} else {
+										console.log("No success/error message found. Form interaction status unknown.");
+										interactionResponse = 'unknown'; // Indicate unknown status
+									}
+								}, 5000); // Wait additional 5 seconds
+							}
+
+							// Extracting additional data for 'annuity_quote' forms
+							if (formType === "annuity_quote") {
+								// ... (Existing code remains the same) ...
+							} else { // Original 'Data Layer' push if not the Quote form type
+								window.dataLayer = window.dataLayer || [];
+								window.dataLayer.push({
+									event: 'form_interaction',
+									click_text: buttonText,
+									form_type: formType,
+									form_name: formName,
+									interaction_type: 'form_submission',
+									interaction_response: interactionResponse 
+								});
+
+								console.log("Data Layer Pushed: Form Interaction Event");
+							}
+						}, 5000); // Initial wait time
+					}
+				});
+
+			} else {
+				console.log("Failed: Form elements with data-attribute not found");
+			}
+		});
+
