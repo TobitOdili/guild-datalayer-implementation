@@ -4,19 +4,28 @@
         // Dynamically get the URL of the clicked social button
         var linkUrl = event.currentTarget.href || 'unknown';
 
-        // Determine the event_section based on the custom data-section attribute
-        var eventSection = this.getAttribute('data-section') || 'body';
+        // Determine the event_section based on the parent element's class
+        var parentElement = this.closest('.header, .footer');
+        var eventSection = parentElement ? (parentElement.classList.contains('header') ? 'header' : 'footer') : 'body';
+
+        // Get the icon class from the <i> tag inside the clicked <a> element
+        var iconElement = this.querySelector('i');
+        var iconClass = iconElement ? iconElement.className : 'unknown';  // Fallback if no <i> tag is found
+        var socialIcon = iconClass.split(' ').filter(function(cls) {
+            return cls.startsWith('fa-') && cls !== 'fab';  // Filters to get only the 'fa-' class (e.g., 'fa-instagram')
+        })[0]?.replace('fa-', '') || 'unknown';  // Extracts the icon name and removes 'fa-'
 
         // Pushing data to dataLayer
         window.dataLayer.push({
             event: 'content_interaction',
             interaction_type: 'social_click',
             event_section: eventSection,
-            link_url: linkUrl
+            link_url: linkUrl,
+            social_icon: socialIcon  // Push the icon name
         });
 
         // Log the interaction
-        console.log("Social click interaction pushed");
+        console.log("Successful: Social click interaction pushed with icon:", socialIcon);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -30,11 +39,6 @@
             socialParents.forEach(socialParent => {
                 var socialButtons = socialParent.querySelectorAll('a'); // Assuming each social button is an anchor tag
                 socialButtons.forEach(button => {
-                    // Attach the data-section attribute to each social button if not already present
-                    if (!button.hasAttribute('data-section')) {
-                        button.setAttribute('data-section', socialParent.getAttribute('data-section') || 'body');
-                    }
-
                     // Attach event listener to each social button
                     button.addEventListener('click', handleSocialClick);
 
