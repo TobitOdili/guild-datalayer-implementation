@@ -5,13 +5,19 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
             var interactionResponse = checkFormSubmissionResult();
             var clickText = form.querySelector('button[type="submit"]').innerText.trim();
+            
+            // Find the form identifier field
+            var formIdField = form.querySelector('input[id^="field_ga_formid"]');
+            var formIdentifier = formIdField ? formIdField.value : '';
+            
             var dataLayerObject = {
                 event: 'form_interaction',
                 click_text: clickText,
                 form_type: formType,
                 form_name: formName,
                 interaction_type: 'form_submission',
-                interaction_response: interactionResponse
+                interaction_response: interactionResponse,
+                form_identifier: formIdentifier
             };
 
             if (formType !== 'newsletter') {
